@@ -1,0 +1,25 @@
+<!-- ROS Demo EigenBot **TURN ON ROBOT FIRST** -->
+<launch>
+    <!--<arg name="" default="" />-->
+
+    <!-- start serial control -->
+    <node name="eigenbot_serial" pkg="eigenbot_driver_v2" type="eigenserial.py" output="screen">
+      <param name="port" value="/dev/ttyACM0"/>
+      <param name="baud" value="115200"/>
+    </node>
+
+    <!-- start eigenlink -->
+    <node name="eigenlink_node" pkg="eigenbot_driver_v2" type="eigenbot_driver_v2_node" output="screen">
+      <param name="off1" value="0"/>
+      <param name="off2" value="0"/>
+    </node>
+
+    <!-- start topology discovery -->
+    <!-- <node name="eigenbot_topology" pkg="eigenbot_driver" type="eigentopology.py" output="screen">
+      <param name="wait" value="10"/>
+    </node>
+    -->
+    <!-- start description assembly -->
+    <!--<node name="eigenbot_assembly" pkg="eigenbot" type="description_listener.py" />-->
+
+</launch>
