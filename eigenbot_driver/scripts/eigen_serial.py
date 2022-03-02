@@ -45,7 +45,7 @@ class eigenbot_driver():
         rospy.init_node('eigenbot_serial_driver')
 
         #Setup the serial port using the specified parameters
-        eigenPort = rospy.get_param('~port', '/dev/ttyUSB0')
+        eigenPort = rospy.get_param('~port', '/dev/ttyACM0')
         eigenBaud = rospy.get_param('~baud', 500000)
         eigenIn = rospy.get_param('~in', 'eigenbot/in')
         eigenOut = rospy.get_param('~out', 'eigenbot/out')

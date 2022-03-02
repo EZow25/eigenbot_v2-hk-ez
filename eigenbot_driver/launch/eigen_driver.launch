@@ -1,7 +1,7 @@
 <launch>
 
 <node pkg="eigenbot_driver" type="eigen_serial.py" name="eigen_serial" output="screen">
- <param name="port" value="/dev/serial/by-id/usb-Cypress_Semiconductor_USBUART_3800020B13193484-if00" />
+ <param name="port" value="/dev/ttyACM0" />
 </node>
 
 <node pkg="eigenbot_driver" type="eigen_joint_control.py" name="eigen_joint" output="screen">

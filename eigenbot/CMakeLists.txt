@@ -197,3 +197,11 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+
+catkin_install_python(PROGRAMS script/eigenbot_joystick_ros.py
+  script/eigenbot_joint_pub.py
+  script/eigenbot_joint_controller.py
+  script/eigenbot_joy_interface.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

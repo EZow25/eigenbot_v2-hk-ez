@@ -1,9 +1,38 @@
-# eigenbot
-Eigenbot module automatic model building
+# eigenbot_v2
 
-Contact: Julian Whitman
-<jwhitman@cmu.edu>, Shuo
-<shuoyang@andrew.cmu.edu> (for how to use eigenbot in ROS environment)
+Contact: Russell Wong <rqwong@andrew.cmu.edu>
+
+## Connecting to EigenBot
+
+First, you will want to depress the power button on the rear end of EigenBot. This should cause an audible beeping sound, and also turn on the LED rings around the modules. Check the voltage indicator on EigenBot's side - ideally it should read 24V or higher. If less than 20V you may experience degradation in performance/reduced joint torque (best to plug it in, you can still work on the robot while it is charging).
+
+You can SSH into EigenBot by connecting to EigenBot's router (network name GL-MT300N-V2-935), then running:
+
+`ssh ubuntu@192.168.8.100`
+
+## Launching Teleop
+
+The appropriate nodes for teleop on the robot can be launched using:
+
+`roslaunch eigenbot eigenbot_teleop.launch`
+
+This will bring up the appropriate `eigendriver` nodes to communicate with the EigenHub over serial, the `joy_node` and `eigenbot_joy_interface` to read joystick inputs and map button presses to velocity commands, and the `eigenbot_joint_controller` which reads topology information and executes the appropriate joint commands in response to a high-level velocity command.
+
+When using the joystick, ensure that the LED next to the MODE button is turned off (if it is on, press the MODE button again to toggle it). Additionally, ensure that the switch on the top of the joystick is set to "D", not "X". Changing any of these modes will remap the joystick buttons, causing EigenBot to respond differently than expected to joystick inputs.
+
+To move EigenBot, the D-pad can be used to command forward/backward as well as clockwise/counter-clockwise point turns. As of now, EigenBot will move at a fixed velocity in the commanded direction. 
+
+## Simulation
+
+We use Coppelia (formerly V-REP) as our simulation environment. Coppelia has the ability to integrate with ROS so that we can directly send joint commands from our ROS stack. To set up Coppelia with ROS, check out the tutorials here: https://www.coppeliarobotics.com/helpFiles/en/ros1Tutorial.htm.
+
+Once you have Coppelia and ROS set up, you can open the simulation defined in `coppelia/hexapod.ttt` from within Coppelia. Make sure that `roscore` is running first before you start Coppelia so that the ROS plugins can be loaded properly. From here, you can play the simulation and send joint commands via ROS which will move EigenBot in simulation.
+
+Note: be wary that the URDF being used in `hexapod.ttt` is technically outdated, and doesn't have the bendy modules configured in the correct topology. The existing URDF has its legs configured as Bendy->Bendy->Bendy->Elbow->Foot, whereas the real EigenBot would have Bendy->Bendy->Elbow->Bendy->Foot. The URDF in simulation can still be used for testing, but a new URDF will need to be created in the future to better reflect the actual expected configuration of EigenBot.
+
+## Old stuff, from EigenBot v1 ##
+
+Eigenbot module automatic model building
 
 Each module will know its own urdf, and will provide its indentification number/name, which modules are attached to it as children, which ports children are on, and which orientation children are affixed.
 
@@ -87,8 +116,6 @@ Some MoveIt configuration files get written automatically by description_assembl
 
 3. roslaunch eigenbot_moveit_config demo.launch
 
-
-### Old stuff ###
 
 rosrun xacro xacro --inorder -o autoXACRO.urdf autoXACRO.xacro (convert xacro to urdf)
 - This is now done within description_assembler.py
