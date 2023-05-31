@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Software License Agreement (BSD License)
 #
@@ -102,8 +102,8 @@ class eigen_topology():
             if len(topo_string) > 0:
                 self.topoPub.publish(topo_string)
             # request topology status 
-            self.serialPub.publish(String("FFO\n")) 
-            
+            #self.serialPub.publish(String("FFO\n")) 
+            self.serialPub.publish(String("FFQ20\n")) #IMU command
             self.rate.sleep()
 
 
