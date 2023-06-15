@@ -2,7 +2,7 @@
 
 
 #Based on eigenbot_joint_pub.py and eigenbot_joint_controller.py
-#Last updated 5/23/23 by hkou@andrew.cmu.edu
+#Last updated 6/8/23 by hkou@andrew.cmu.edu
 # import numpy as np
 # from vpython import *
 # import rospy
@@ -56,7 +56,7 @@ def quaternion2RPY(quat_dict, RPY_dict):
         y=vector(0,1,0)
         s=cross(k,y)
         v=cross(s,k)
-        vrot=v*cos(roll)+cross(k,v)*sin(roll) #rodriguez formula for roll
+        vrot=v*cos(roll)+cross(k,v)*sin(roll) #rodrigues' formula for roll
  
         frontArrow.axis=k
         sideArrow.axis=cross(k,vrot)
@@ -67,6 +67,7 @@ def quaternion2RPY(quat_dict, RPY_dict):
         frontArrow.length=-2
         upArrow.length=-2
 
+def 
 class EigenbotJointPub():
     def __init__(self):
         self.initialized = False
@@ -109,48 +110,42 @@ class EigenbotJointPub():
                 self.rate.sleep()
                 continue
 
-            # Create Joint State
-            joint_state = JointState()
-            joint_state.header.stamp = rospy.Time.now()
+
+            #Compute CPG joint angles:
+            #Find dx/dt, dy/dt for this time step using Euler forward model
             
+            #Set Joint States
+
+
+
+
+
+
+            # # Create Joint State (original tripod sin gait)
+            # joint_state = JointState()
+            # joint_state.header.stamp = rospy.Time.now()
+            
+            # # for i in range(self.num_joints):
+            # #     joint_state.name.append('bendy_input_M{}_S{}'.format(i+1,i+1))
+            # joint_state.name = self.joint_names
+
+            # # Assume we are using positional control
+            # joint_state.velocity = [float('3')]*self.num_joints
+            # joint_state.effort = [float('3')]*self.num_joints
+            # joint_state.position  = np.copy(self.initial_joint_positions)
+
+            # # Set joint positions
             # for i in range(self.num_joints):
-            #     joint_state.name.append('bendy_input_M{}_S{}'.format(i+1,i+1))
-            joint_state.name = self.joint_names
-
-            # Assume we are using positional control
-            joint_state.velocity = [float('3')]*self.num_joints
-            joint_state.effort = [float('3')]*self.num_joints
-            joint_state.position  = np.copy(self.initial_joint_positions)
-
-            # Set joint positions
-            for i in range(self.num_joints):
-                joint_i = i//6
-                leg_i = i%6
-                joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
-                if joint_i >= 1:
-                    joint_state.position[i] = max(0, joint_state.position[i])
-                joint_state.position[i] += self.initial_joint_positions[i]
-            self.joint_cmd_pub.publish(joint_state)
-
-            #visualize body orientation
-            # rate(200)
+            #     joint_i = i//6
+            #     leg_i = i%6
+            #     joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
+            #     if joint_i >= 1:
+            #         joint_state.position[i] = max(0, joint_state.position[i])
+            #     joint_state.position[i] += self.initial_joint_positions[i]
+            # self.joint_cmd_pub.publish(joint_state)
             
-            # self.k=vector(cos(self.body_orientation.yaw)*cos(self.body_orientation.pitch), sin(self.body_orientation.pitch),sin(self.body_orientation.yaw)*cos(self.body_orientation.pitch))
-            # self.y=vector(0,1,0)
-            # self.s=cross(self.k,self.y)
-            # self.v=cross(self.s,self.k)
-            # self.vrot=self.v*cos(self.body_orientation.roll)+cross(self.k,self.v)*sin(self.body_orientation.roll)
-    
-            # frontArrow.axis=self.k
-            # sideArrow.axis=cross(self.k,self.vrot)
-            # upArrow.axis=self.vrot
-            # myObj.axis=self.k
-            # myObj.up=self.vrot
-            # sideArrow.length=2
-            # frontArrow.length=4
-            # upArrow.length=1
             
-
+            
             t += dt
             self.rate.sleep()
     

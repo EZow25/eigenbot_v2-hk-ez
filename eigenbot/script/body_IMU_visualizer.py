@@ -2,7 +2,7 @@
 
 
 #Based on eigenbot_joint_pub.py and eigenbot_joint_controller.py
-#Last updated 5/23/23 by hkou@andrew.cmu.edu
+#Last updated 6/8/23 by hkou@andrew.cmu.edu
 # import numpy as np
 # from vpython import *
 # import rospy
@@ -132,25 +132,7 @@ class EigenbotJointPub():
                 joint_state.position[i] += self.initial_joint_positions[i]
             self.joint_cmd_pub.publish(joint_state)
 
-            #visualize body orientation
-            # rate(200)
             
-            # self.k=vector(cos(self.body_orientation.yaw)*cos(self.body_orientation.pitch), sin(self.body_orientation.pitch),sin(self.body_orientation.yaw)*cos(self.body_orientation.pitch))
-            # self.y=vector(0,1,0)
-            # self.s=cross(self.k,self.y)
-            # self.v=cross(self.s,self.k)
-            # self.vrot=self.v*cos(self.body_orientation.roll)+cross(self.k,self.v)*sin(self.body_orientation.roll)
-    
-            # frontArrow.axis=self.k
-            # sideArrow.axis=cross(self.k,self.vrot)
-            # upArrow.axis=self.vrot
-            # myObj.axis=self.k
-            # myObj.up=self.vrot
-            # sideArrow.length=2
-            # frontArrow.length=4
-            # upArrow.length=1
-            
-
             t += dt
             self.rate.sleep()
     
