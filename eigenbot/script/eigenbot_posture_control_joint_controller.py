@@ -2,38 +2,15 @@
 
 
 #Based on eigenbot_joint_pub.py and eigenbot_joint_controller.py
-#Last updated 6/8/23 by hkou@andrew.cmu.edu
-# import numpy as np
-# from vpython import *
-# import rospy
-# import math
-# import rosnode
-# from sensor_msgs.msg import JointState
-# from geometry_msgs.msg import PoseStamped
+#Last updated 6/15/23 by hkou@andrew.cmu.edu
 
 
 import numpy as np
-from vpython import *
 import rospy
 import math
 import rosnode
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import PoseStamped
-
-scene.range=6
-scene.background=color.yellow
-scene.forward=vector(-1,-1,-1)
-scene.width=1200
-scene.height=1080
-xarrow=arrow(length=2, shaftwidth=.1, color=color.red,axis=vector(1,0,0))
-yarrow=arrow(length=2, shaftwidth=.1, color=color.green,axis=vector(0,1,0))
-zarrow=arrow(length=4, shaftwidth=.1, color=color.blue,axis=vector(0,0,1))
- 
-frontArrow=arrow(length=2,shaftwidth=.1,color=color.purple,axis=vector(1,0,0))
-upArrow=arrow(length=2.5,shaftwidth=.1,color=color.black,axis=vector(0,1,0))
-sideArrow=arrow(length=2.5,shaftwidth=.1,color=color.orange,axis=vector(0,0,1))
-bBoard=box(length=1,width=3.5,height=2,opacity=.8,pos=vector(0,0,0,))
-myObj=compound([bBoard])
 
 
 def wrap_to_pi(angle):
@@ -51,23 +28,11 @@ def quaternion2RPY(quat_dict, RPY_dict):
         yaw=-math.atan2(2*(q0*q3+q1*q2),1-2*(q2*q2+q3*q3))
         RPY_dict.update({'roll':roll, 'pitch':pitch, 'yaw': yaw})
         #print("roll: ", roll, "pitch: ", pitch, "yaw: ", yaw)
-        rate(200)
-        k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))
-        y=vector(0,1,0)
-        s=cross(k,y)
-        v=cross(s,k)
-        vrot=v*cos(roll)+cross(k,v)*sin(roll) #rodrigues' formula for roll
- 
-        frontArrow.axis=k
-        sideArrow.axis=cross(k,vrot)
-        upArrow.axis=vrot
-        myObj.axis=k
-        myObj.up=vrot
-        sideArrow.length=2
-        frontArrow.length=-2
-        upArrow.length=-2
+        
+def compute_distal_angle(proximal_angle, intermediate_angle):
+    distal_angle = 0
+    return distal_angle
 
-def 
 class EigenbotJointPub():
     def __init__(self):
         self.initialized = False
@@ -83,12 +48,32 @@ class EigenbotJointPub():
         self.joint_fb_sub = rospy.Subscriber('/eigenbot/joint_fb', JointState, self.joint_fb_callback)
         self.body_IMU_fb_sub = rospy.Subscriber('/eigenbot/body_IMU_fb', PoseStamped, self.body_IMU_fb_callback)
         
+        #Posture control variables
+        self.cpg_x = 0
+        self.cpg_x_next = 0
+        self.cpg_y = 0
+        self.cpg_y_next = 0
+        self.forw_velocity_omega = 10
+        self.gamma = 40 #from paper
+        self.gait_a = np.pi/18 #from paper
+        self.gait_b = np.pi/6 #from paper
+        self.gait_n = 4 #from paper
+        self.mew = 1 #from paper
+        self.cx0 = np.array([0,0,0,0,0,0])
+        self.cy0 = np.array([np.pi/16,np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16]) #from paper
+        self.R_target_pose = np.array([0,0,0]) #quaternion? RPY?
+        self.T_goal_pose = np.array([0,0,0])
+        self.P_current_pose = np.array([0,0,0])
+        self.theta_z = 0 #heading??
+        self.Rz_transform = np.array([[math.cos(self.theta_z), -math.sin(self.theta_z), 0],
+                                      [math.sin(self.theta_z), math.cos(self.theta_z), 0],
+                                      [0,0,1]])
+
 
     def main_loop(self):
         # parameters for alternating tripod
         # amplitudes = np.tile(np.array([np.pi/8, 3*np.pi/16, np.pi/4])[:,None], (1,6))
         amplitudes = np.tile(np.array([np.pi/8, 2*np.pi/16, np.pi/8])[:,None], (1,6))
-        # const_offsets = np.array([[0,0,0,0,0,0], 
         #     [1,1,1,1,1,1], [0,0,0,0,0,0]])*amplitudes
         const_offsets = np.array([
             [-1,1,-1,1,-1,1],
@@ -100,52 +85,82 @@ class EigenbotJointPub():
             [0,np.pi,0,np.pi,0,np.pi],
             [0,np.pi,0,np.pi,0,np.pi]
         ])
-        # for test without 90deg module in hexapod
-        # const_offsets[1,:] -= np.pi/4
-        # const_offsets[2,:] += np.pi/4
+
+        #Timing constants
         t = 0
         dt = np.pi/10
+
+        #set target constant orientation T
+        #set tripod gait coupling matrix K
+        #Setup initial offsets based on specific leg 
+
         while not rospy.is_shutdown():
             if not self.initialized:
                 self.rate.sleep()
                 continue
 
-
+            
             #Compute CPG joint angles:
             #Find dx/dt, dy/dt for this time step using Euler forward model
-            
+            self.cpg_x_next = -self.forw_velocity_omega*self.cpg_y+self.gamma*(self.mew*self.mew-math.sqrt(self.cpg_x*self.cpg_x+self.cpg_y*self.cpg_y))*self.cpg_x
+            self.cpg_y_next = self.forw_velocity_omega*self.cpg_x+self.gamma*(self.mew*self.mew-math.sqrt(self.cpg_x*self.cpg_x+self.cpg_y*self.cpg_y))*self.cpg_y
+
             #Set Joint States
-
-
-
-
-
-
-            # # Create Joint State (original tripod sin gait)
-            # joint_state = JointState()
-            # joint_state.header.stamp = rospy.Time.now()
             
-            # # for i in range(self.num_joints):
-            # #     joint_state.name.append('bendy_input_M{}_S{}'.format(i+1,i+1))
-            # joint_state.name = self.joint_names
 
-            # # Assume we are using positional control
-            # joint_state.velocity = [float('3')]*self.num_joints
-            # joint_state.effort = [float('3')]*self.num_joints
-            # joint_state.position  = np.copy(self.initial_joint_positions)
 
-            # # Set joint positions
+
+
+
+            # Create Joint State (original tripod sin gait)
+            joint_state = JointState()
+            joint_state.header.stamp = rospy.Time.now()
+            
             # for i in range(self.num_joints):
-            #     joint_i = i//6
-            #     leg_i = i%6
-            #     joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
-            #     if joint_i >= 1:
-            #         joint_state.position[i] = max(0, joint_state.position[i])
-            #     joint_state.position[i] += self.initial_joint_positions[i]
-            # self.joint_cmd_pub.publish(joint_state)
+            #     joint_state.name.append('bendy_input_M{}_S{}'.format(i+1,i+1))
+            joint_state.name = self.joint_names
+
+            # Assume we are using positional control
+            joint_state.velocity = [float('3')]*self.num_joints
+            joint_state.effort = [float('3')]*self.num_joints
+            joint_state.position  = np.copy(self.initial_joint_positions)
+
+            # Set joint positions
+            #0123456789 10 11 12 13 14 15 16 17 index
+            #0000001111  1  1  2  2  2  2  2  2 joint number (joint_i var)
+            #proximal interm        distal      joint name
+            #1234561234  5  6  1  2  3  4  5  6 leg number   (leg_i var)
+
+            #each position variable contains 3 rows (joints) x 6 cols (legs). 
+            #iterate through proximal joint on every leg, then to the intermediate joint on every leg, and finally all the distals.
+            
+            for i in range(self.num_joints):
+                joint_i = i//6 #floor division 
+                
+                leg_i = i%6 #modulus
+                if joint_i == 0: #proximal
+                    joint_state.position[i] = self.cpg_x_next
+                elif joint_i == 1:
+                    joint_state.position[i] = self.cpg_y_next#max(self.cpg_y, self.cy0[i])
+                elif joint_i == 2:
+                    proximal_angle = 0
+                    intermediate_angle = 0
+                    joint_state.position[i] = compute_distal_angle(proximal_angle, intermediate_angle)
+                #joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
+                
+                
+                
+                if joint_i >= 1: #intermediate and distal joints
+                    joint_state.position[i] = max(0, joint_state.position[i])
+                joint_state.position[i] += self.initial_joint_positions[i]
+                
+                #print("joint position" + str(i) + ": " + str(joint_state.position[i]))
+                print(joint_state)
+            self.joint_cmd_pub.publish(joint_state)
             
             
-            
+            self.cpg_x = self.cpg_x_next
+            self.cpg_y = self.cpg_y_next
             t += dt
             self.rate.sleep()
     
