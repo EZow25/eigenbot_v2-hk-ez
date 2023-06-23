@@ -14,8 +14,10 @@ if simplified_mode == 0:
     gait_b = np.pi/6 #from paper
     gait_n = 4 #from paper
     mew = 1 #from paper
-    cx0_offset = np.zeros(6) #np.array([np.pi/4, np.pi/4, 0, 0, -np.pi/4, -np.pi/4])
-    cy0_offset = np.zeros(6) #np.array([np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16]) #from paper
+    #cx0_offset = np.zeros(6)
+    #cy0_offset = np.zeros(6)
+    cx0_offset = np.array([np.pi/4, np.pi/4, 0, 0, -np.pi/4, -np.pi/4]) 
+    cy0_offset = np.array([np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16]) #from paper
     Ts = .0001
     Tstart = 0
     Tstop = .5
@@ -25,10 +27,10 @@ if simplified_mode == 0:
     cpg_x = np.zeros(cpg_s)
     cpg_y = np.zeros(cpg_s)
     for row in range(np.shape(cpg_x)[0]):
-        cpg_x[row][0]= .04
-        cpg_y[row][0]= .04
+        cpg_x[row][0]= .0
+        cpg_y[row][0]= .0
     ksum0 = np.zeros(6)
-    lambda_cs = 0.01 #K array coupling strength
+    lambda_cs = 0.25 #K array coupling strength
     #coupling matrix K for tripod gait on hexapod
     K_array =   np.array(
                 [[0, -1, -1, 1, 1, -1],
@@ -44,23 +46,29 @@ if simplified_mode == 0:
 
                 
     #generate data
-    for i in range(6):
-        for k in range(N+1):
+
+    #each time step couple each leg, i and k iteration are reversed
+    for k in range(N+1):
+        for i in range(6):
             H = np.absolute(((cpg_x[i][k]-cx0_offset[i])/gait_a)**gait_n) + np.absolute(((cpg_y[i][k]-cy0_offset[i])/gait_b)**gait_n)
             dHdx = (gait_n/gait_a)*((cpg_x[i][k]-cx0_offset[i])/gait_a)**(gait_n-1)
             dHdy = (gait_n/gait_b)*((cpg_y[i][k]-cy0_offset[i])/gait_b)**(gait_n-1)
-                
+            
+            #reset ksum0
+            ksum0[i] = 0
             for r in range(np.shape(K_array)[0]):
                 for c in range(np.shape(K_array)[1]):
                     if r == i:
                         #print(K_array[r][c])
-                        ksum0[i] = (ksum0[i] + K_array[r][c])*cpg_y[i][k]
+                        ksum0[i] = ksum0[i] + (K_array[r][c]*cpg_y[i][k])
                         #print(ksum)
             cpg_x[i][k+1] = (gamma*(mew - H)*dHdx - omega*(dHdy))*Ts + cpg_x[i][k]
-            cpg_y[i][k+1] = (gamma*(mew - H)*dHdy + omega*(dHdx))*Ts + cpg_y[i][k] + lambda_cs*ksum0[i]
+            cpg_y[i][k+1] = (gamma*(mew - H)*dHdy + omega*(dHdx) + lambda_cs*ksum0[i])*Ts + cpg_y[i][k] #place lambda ksum inside Ts
             #print("k: " + str(k) + " X: " + str(cpg_x[k+1])+ " Y: " + str(cpg_y[k+1]))
-        labelCPGX = "CPG_X_" + str(i)
-        labelCPGY = "CPG_Y_" + str(i)
+    
+    for i in range(6):
+        labelCPGX = "CPG_X_LEG_" + str(i)
+        labelCPGY = "CPG_Y_LEG_" + str(i)
         ax[i].plot(t, cpg_x[i], label=labelCPGX)
         ax[i].plot(t, cpg_y[i], label=labelCPGY)
         ax[i].set_xlabel('time')
