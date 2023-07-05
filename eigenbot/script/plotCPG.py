@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-simplified_mode = 0
+simplified_mode = 1
 
 if simplified_mode == 0:
     omega = 40/(np.pi*2) #oscillation frequency in rad/s
@@ -16,11 +16,12 @@ if simplified_mode == 0:
     mew = 1 #from paper
     #cx0_offset = np.zeros(6)
     #cy0_offset = np.zeros(6)
-    cx0_offset = np.array([np.pi/4, np.pi/4, 0, 0, -np.pi/4, -np.pi/4]) 
+    #cx0_offset = np.array([np.pi/4, np.pi/4, 0, 0, -np.pi/4, -np.pi/4]) 
+    cx0_offset = np.array([np.pi/16, np.pi/16, 0, 0, -np.pi/16, -np.pi/16]) 
     cy0_offset = np.array([np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16]) #from paper
     Ts = .0001
     Tstart = 0
-    Tstop = .5
+    Tstop = .11
     
     N = int((Tstop-Tstart)/Ts)
     cpg_s = (6,N+2)
@@ -60,7 +61,7 @@ if simplified_mode == 0:
                 for c in range(np.shape(K_array)[1]):
                     if r == i:
                         #print(K_array[r][c])
-                        ksum0[i] = ksum0[i] + (K_array[r][c]*cpg_y[i][k])
+                        ksum0[i] = ksum0[i] + (K_array[r][c]*(cpg_y[i][k]-cy0_offset[i]))
                         #print(ksum)
             cpg_x[i][k+1] = (gamma*(mew - H)*dHdx - omega*(dHdy))*Ts + cpg_x[i][k]
             cpg_y[i][k+1] = (gamma*(mew - H)*dHdy + omega*(dHdx) + lambda_cs*ksum0[i])*Ts + cpg_y[i][k] #place lambda ksum inside Ts
@@ -71,10 +72,10 @@ if simplified_mode == 0:
         labelCPGY = "CPG_Y_LEG_" + str(i)
         ax[i].plot(t, cpg_x[i], label=labelCPGX)
         ax[i].plot(t, cpg_y[i], label=labelCPGY)
-        ax[i].set_xlabel('time')
+        ax[i].set_xlabel('Time (t)')
         ax[i].set_ylabel('amplitude')
         ax[i].legend()
-        ax[i].set_title('COMPLEX MODEL_'+str(i)+': CPG oscillation vs Time')
+        ax[i].set_title('COMPLEX MODEL LEG '+str(i)+': CPG oscillation vs Time')
     plt.show()
 
 
@@ -90,7 +91,7 @@ if simplified_mode == 1:
     Ts = .001
     Tstart = 0
     Tstop = .5
-    lambda_cs = 0.01
+    lambda_cs = 1
     N = int((Tstop-Tstart)/Ts)
     cpg_s = (4,N+2)
     cpg_x = np.zeros(cpg_s)
@@ -108,9 +109,10 @@ if simplified_mode == 1:
     #plotting
     fig, ax = plt.subplots(4,1,layout = "constrained")
     t = np.arange(Tstart,Tstop+2*Ts,Ts)
-    for i in range(4):
-        for k in range(N+1):  
+    for k in range(N+1):
+        for i in range(4):  
             r = math.sqrt(cpg_x[i][k]**2+cpg_y[i][k]**2)
+            ksum0[i] = 0
             for row in range(np.shape(K_array)[0]):
                     for col in range(np.shape(K_array)[1]):
                         if row == i:
@@ -118,7 +120,9 @@ if simplified_mode == 1:
                             ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i][k]
                             #print(ksum)
             cpg_x[i][k+1] = (alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]
-            cpg_y[i][k+1] = (beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k]))*Ts + cpg_y[i][k] + lambda_cs*ksum0[i]
+            cpg_y[i][k+1] = (beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k] 
+    
+    for i in range(4):
         labelCPGX = "CPG_X_" + str(i)
         labelCPGY = "CPG_Y_" + str(i)
         ax[i].plot(t, cpg_x[i], label=labelCPGX)
@@ -127,7 +131,6 @@ if simplified_mode == 1:
         ax[i].set_ylabel('amplitude')
         ax[i].legend()
         ax[i].set_title('SIMPLIFIED MODEL_'+str(i)+': CPG oscillation vs Time')
-    print(ksum0)
     plt.show()
     
 
