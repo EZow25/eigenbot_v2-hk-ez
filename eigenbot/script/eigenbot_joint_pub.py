@@ -115,8 +115,8 @@ class EigenbotJointPub():
             joint_state.name = self.joint_names
 
             # Assume we are using positional control
-            joint_state.velocity = [float(5)]*self.num_joints
-            joint_state.effort = [float(5)]*self.num_joints
+            joint_state.velocity = [float(3)]*self.num_joints
+            joint_state.effort = [float(3)]*self.num_joints
             joint_state.position  = np.copy(self.initial_joint_positions)
 
             # Set joint positions
@@ -124,14 +124,15 @@ class EigenbotJointPub():
                 joint_i = i//6
                 leg_i = i%6
                 joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
-                if leg_i == 2 :
+                if leg_i == 2 or leg_i == 3:
                     if joint_i == 0:
                         joint_state.position[i] = cpg_x[leg_i][-1] 
                     if joint_i == 1:
                         joint_state.position[i] = cpg_y[leg_i][-1]
-                elif joint_i >= 1:
-                    joint_state.position[i] = max(0, joint_state.position[i])
-                joint_state.position[i] += self.initial_joint_positions[i]
+                else:
+                    if joint_i >= 1:
+                        joint_state.position[i] = max(0, joint_state.position[i])
+                    joint_state.position[i] += self.initial_joint_positions[i]
             self.joint_cmd_pub.publish(joint_state)
 
             t += dt
