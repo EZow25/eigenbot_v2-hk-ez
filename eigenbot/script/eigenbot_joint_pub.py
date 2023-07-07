@@ -123,13 +123,13 @@ class EigenbotJointPub():
             for i in range(self.num_joints):
                 joint_i = i//6
                 leg_i = i%6
-                joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
                 if leg_i == 2 or leg_i == 3:
                     if joint_i == 0:
                         joint_state.position[i] = cpg_x[leg_i][-1] 
                     if joint_i == 1:
                         joint_state.position[i] = cpg_y[leg_i][-1]
                 else:
+                    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
                     if joint_i >= 1:
                         joint_state.position[i] = max(0, joint_state.position[i])
                     joint_state.position[i] += self.initial_joint_positions[i]
