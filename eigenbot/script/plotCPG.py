@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-simplified_mode = 1
+simplified_mode = 0
 
 if simplified_mode == 0:
     omega = 40/(np.pi*2) #oscillation frequency in rad/s
