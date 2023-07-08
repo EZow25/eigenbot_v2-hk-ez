@@ -5,6 +5,7 @@ import rospy
 import rosnode
 from sensor_msgs.msg import JointState
 import matplotlib as plt
+import math
 
 
 def wrap_to_pi(angle):
@@ -43,37 +44,31 @@ class EigenbotJointPub():
         # const_offsets[1,:] -= np.pi/4
         # const_offsets[2,:] += np.pi/4
         t = 0
-        dt = np.pi/10
+        dt = 0.001
         
         
         while not rospy.is_shutdown():
             
             #CPG
-            omega = 40/(np.pi*2) #oscillation frequency in rad/s
-            gamma = 40 #from paper
+            omega = 300/(np.pi*2) #oscillation frequency in rad/s
+            alpha = 1
+            beta = 1
             gait_a = np.pi/18 #from paper
             gait_b = np.pi/6 #from paper
             gait_n = 4 #from paper
             mew = 1 #from paper
-            #cx0_offset = np.zeros(6)
-            #cy0_offset = np.zeros(6)
-            #cx0_offset = np.array([np.pi/4, np.pi/4, 0, 0, -np.pi/4, -np.pi/4]) 
-            cx0_offset = np.array([np.pi/16, np.pi/16, 0, 0, -np.pi/16, -np.pi/16]) 
-            cy0_offset = np.array([np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16]) #from paper
-            Ts = .0001
+            Ts = .001
             Tstart = 0
             Tstop = t
-            
+            lambda_cs = 1
             N = int((Tstop-Tstart)/Ts)
             cpg_s = (6,N+2)
             cpg_x = np.zeros(cpg_s)
             cpg_y = np.zeros(cpg_s)
             for row in range(np.shape(cpg_x)[0]):
-                cpg_x[row][0]= .0
-                cpg_y[row][0]= .0
+                cpg_x[row][0]= .01
+                cpg_y[row][0]= .01
             ksum0 = np.zeros(6)
-            lambda_cs = 0.25 #K array coupling strength
-            #coupling matrix K for tripod gait on hexapod
             K_array =   np.array(
                         [[0, -1, -1, 1, 1, -1],
                         [-1, 0, 1, -1, -1, 1],
@@ -81,27 +76,22 @@ class EigenbotJointPub():
                         [1, -1, -1, 0, 1, -1],
                         [1, -1, -1, 1, 0, -1],
                         [-1, 1, 1, -1, -1, 0]])
-          
-            #generate data
-            #each time step couple each leg, i and k iteration are reversed
+
+            # t = np.arange(Tstart,Tstop+2*Ts,Ts)
             for k in range(N+1):
-                for i in range(6):
-                    H = np.absolute(((cpg_x[i][k]-cx0_offset[i])/gait_a)**gait_n) + np.absolute(((cpg_y[i][k]-cy0_offset[i])/gait_b)**gait_n)
-                    dHdx = (gait_n/gait_a)*((cpg_x[i][k]-cx0_offset[i])/gait_a)**(gait_n-1)
-                    dHdy = (gait_n/gait_b)*((cpg_y[i][k]-cy0_offset[i])/gait_b)**(gait_n-1)
-                    
-                    #reset ksum0
+                for i in range(6):  
+                    r = math.sqrt(cpg_x[i][k]**2+cpg_y[i][k]**2)
                     ksum0[i] = 0
-                    for r in range(np.shape(K_array)[0]):
-                        for c in range(np.shape(K_array)[1]):
-                            if r == i:
+                    for row in range(np.shape(K_array)[0]):
+                        for col in range(np.shape(K_array)[1]):
+                            if row == i:
                                 #print(K_array[r][c])
-                                ksum0[i] = ksum0[i] + (K_array[r][c]*(cpg_y[i][k]-cy0_offset[i]))
+                                ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i][k]
                                 #print(ksum)
-                    cpg_x[i][k+1] = (gamma*(mew - H)*dHdx - omega*(dHdy))*Ts + cpg_x[i][k]
-                    cpg_y[i][k+1] = (gamma*(mew - H)*dHdy + omega*(dHdx) + lambda_cs*ksum0[i])*Ts + cpg_y[i][k] #place lambda ksum inside Ts
-            
-            
+                    cpg_x[i][k+1] = (alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]
+                    cpg_y[i][k+1] = (beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k] 
+        
+                
             if not self.initialized:
                 self.rate.sleep()
                 continue
@@ -123,17 +113,17 @@ class EigenbotJointPub():
             for i in range(self.num_joints):
                 joint_i = i//6
                 leg_i = i%6
-                if leg_i == 2 or leg_i == 3:
+                if leg_i == 2:
                     if joint_i == 0:
-                        joint_state.position[i] = cpg_x[leg_i][-1] 
+                        joint_state.position[i] = cpg_x[leg_i][-1] + self.initial_joint_positions[i]
                     if joint_i == 1:
-                        joint_state.position[i] = cpg_y[leg_i][-1]
-                else:
-                    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
-                    if joint_i >= 1:
-                        joint_state.position[i] = max(0, joint_state.position[i])
-                    joint_state.position[i] += self.initial_joint_positions[i]
-            self.joint_cmd_pub.publish(joint_state)
+                        joint_state.position[i] = cpg_y[leg_i][-1] + self.initial_joint_positions[i]
+                #else:
+                #    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
+                #    if joint_i >= 1:
+                #        joint_state.position[i] = max(0, joint_state.position[i])
+                #    joint_state.position[i] += self.initial_joint_positions[i]
+                    self.joint_cmd_pub.publish(joint_state)
 
             t += dt
             self.rate.sleep()
