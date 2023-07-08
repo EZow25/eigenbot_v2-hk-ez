@@ -45,51 +45,46 @@ class EigenbotJointPub():
         # const_offsets[2,:] += np.pi/4
         t = 0
         dt = 0.001
-        
+        omega = 300/(np.pi*2) #oscillation frequency in rad/s
+        alpha = 1
+        beta = 1
+        gait_a = np.pi/18 #from paper
+        gait_b = np.pi/6 #from paper
+        gait_n = 4 #from paper
+        mew = 1 #from paper
+        Ts = .001
+        Tstart = 0
+        lambda_cs = 1
+        # N = int((Tstop-Tstart)/Ts)
+        cpg_s = (6,N+2)
+        cpg_x = np.zeros(cpg_s)
+        cpg_y = np.zeros(cpg_s)
+        for row in range(np.shape(cpg_x)[0]):
+            cpg_x[row][0]= .01
+            cpg_y[row][0]= .01
+        ksum0 = np.zeros(6)
+        K_array =   np.array(
+                    [[0, -1, -1, 1, 1, -1],
+                    [-1, 0, 1, -1, -1, 1],
+                    [-1, 1, 0, -1, -1, 1],
+                    [1, -1, -1, 0, 1, -1],
+                    [1, -1, -1, 1, 0, -1],
+                    [-1, 1, 1, -1, -1, 0]])
         
         while not rospy.is_shutdown():
-            
-            #CPG
-            omega = 300/(np.pi*2) #oscillation frequency in rad/s
-            alpha = 1
-            beta = 1
-            gait_a = np.pi/18 #from paper
-            gait_b = np.pi/6 #from paper
-            gait_n = 4 #from paper
-            mew = 1 #from paper
-            Ts = .001
-            Tstart = 0
-            Tstop = t
-            lambda_cs = 1
-            N = int((Tstop-Tstart)/Ts)
-            cpg_s = (6,N+2)
-            cpg_x = np.zeros(cpg_s)
-            cpg_y = np.zeros(cpg_s)
-            for row in range(np.shape(cpg_x)[0]):
-                cpg_x[row][0]= .01
-                cpg_y[row][0]= .01
-            ksum0 = np.zeros(6)
-            K_array =   np.array(
-                        [[0, -1, -1, 1, 1, -1],
-                        [-1, 0, 1, -1, -1, 1],
-                        [-1, 1, 0, -1, -1, 1],
-                        [1, -1, -1, 0, 1, -1],
-                        [1, -1, -1, 1, 0, -1],
-                        [-1, 1, 1, -1, -1, 0]])
-
             # t = np.arange(Tstart,Tstop+2*Ts,Ts)
-            for k in range(N+1):
-                for i in range(6):  
-                    r = math.sqrt(cpg_x[i][k]**2+cpg_y[i][k]**2)
-                    ksum0[i] = 0
-                    for row in range(np.shape(K_array)[0]):
-                        for col in range(np.shape(K_array)[1]):
-                            if row == i:
-                                #print(K_array[r][c])
-                                ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i][k]
-                                #print(ksum)
-                    cpg_x[i][k+1] = (alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]
-                    cpg_y[i][k+1] = (beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k] 
+            k = t / Ts
+            for i in range(6):  
+                r = math.sqrt(cpg_x[i][k]**2+cpg_y[i][k]**2)
+                ksum0[i] = 0
+                for row in range(np.shape(K_array)[0]):
+                    for col in range(np.shape(K_array)[1]):
+                        if row == i:
+                            #print(K_array[r][c])
+                            ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i][k]
+                            #print(ksum)
+                cpg_x[i][k+1] = (alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]
+                cpg_y[i][k+1] = (beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k] 
         
                 
             if not self.initialized:
