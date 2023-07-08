@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-simplified_mode = 0
+simplified_mode = 1
 
 if simplified_mode == 0:
     omega = 40/(np.pi*2) #oscillation frequency in rad/s
@@ -93,24 +93,26 @@ if simplified_mode == 1:
     Tstop = .5
     lambda_cs = 1
     N = int((Tstop-Tstart)/Ts)
-    cpg_s = (4,N+2)
+    cpg_s = (6,N+2)
     cpg_x = np.zeros(cpg_s)
     cpg_y = np.zeros(cpg_s)
     for row in range(np.shape(cpg_x)[0]):
         cpg_x[row][0]= .01
         cpg_y[row][0]= .01
-    ksum0 = np.zeros(4)
+    ksum0 = np.zeros(6)
     K_array =   np.array(
-                [[0, -1, -1, 1],
-                [-1, 0, 1, -1],
-                [-1, 1, 0, -1],
-                [1, -1, -1, 0]])
+                [[0, -1, -1, 1, 1, -1],
+                [-1, 0, 1, -1, -1, 1],
+                [-1, 1, 0, -1, -1, 1],
+                [1, -1, -1, 0, 1, -1],
+                [1, -1, -1, 1, 0, -1],
+                [-1, 1, 1, -1, -1, 0]])
 
     #plotting
-    fig, ax = plt.subplots(4,1,layout = "constrained")
+    fig, ax = plt.subplots(6,1,layout = "constrained")
     t = np.arange(Tstart,Tstop+2*Ts,Ts)
     for k in range(N+1):
-        for i in range(4):  
+        for i in range(6):  
             r = math.sqrt(cpg_x[i][k]**2+cpg_y[i][k]**2)
             ksum0[i] = 0
             for row in range(np.shape(K_array)[0]):
@@ -122,7 +124,7 @@ if simplified_mode == 1:
             cpg_x[i][k+1] = (alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]
             cpg_y[i][k+1] = (beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k] 
     
-    for i in range(4):
+    for i in range(6):
         labelCPGX = "CPG_X_" + str(i)
         labelCPGY = "CPG_Y_" + str(i)
         ax[i].plot(t, cpg_x[i], label=labelCPGX)
