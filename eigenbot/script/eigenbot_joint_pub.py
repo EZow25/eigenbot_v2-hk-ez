@@ -56,7 +56,7 @@ class EigenbotJointPub():
         Tstart = 0
         lambda_cs = 1
         # N = int((Tstop-Tstart)/Ts)
-        cpg_s = (6,N+2)
+        cpg_s = 6
         cpg_x = np.zeros(cpg_s)
         cpg_y = np.zeros(cpg_s)
         for row in range(np.shape(cpg_x)[0]):
@@ -83,8 +83,10 @@ class EigenbotJointPub():
                             #print(K_array[r][c])
                             ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i][k]
                             #print(ksum)
-                cpg_x[i][k+1] = (alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]
-                cpg_y[i][k+1] = (beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k] 
+                
+                B = np.array([(alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]])
+                cpg_x[i] = np.concatenate(cpg_x[i], B, axis=1)
+                cpg_y[i] = np.concatenate(cpg_y[i], np.array([(beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k]]), axis=1) 
         
                 
             if not self.initialized:
