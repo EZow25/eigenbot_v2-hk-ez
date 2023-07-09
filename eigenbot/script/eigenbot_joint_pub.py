@@ -57,11 +57,13 @@ class EigenbotJointPub():
         lambda_cs = 1
         # N = int((Tstop-Tstart)/Ts)
         cpg_s = 6
-        cpg_x = np.array([[0.01],[0.01],[0.01],[0.01],[0.01],[0.01]])
-        cpg_y = np.array([[0.01],[0.01],[0.01],[0.01],[0.01],[0.01]])
-        for row in range(np.shape(cpg_x)[0]):
-            cpg_x[row][0]= float(.01)
-            cpg_y[row][0]= float(.01)
+        cpg_x = [[0.01],[0.01],[0.01],[0.01],[0.01],[0.01]]
+        #print(cpg_x)
+        cpg_y = [[0.01],[0.01],[0.01],[0.01],[0.01],[0.01]]
+        #print(cpg_y)
+        #for row in range(np.shape(cpg_x)[0]):
+        #    cpg_x[row][0]= float(.01)
+        #    cpg_y[row][0]= float(.01)
         ksum0 = np.zeros(6)
         K_array =   np.array(
                     [[0, -1, -1, 1, 1, -1],
@@ -74,6 +76,8 @@ class EigenbotJointPub():
         while not rospy.is_shutdown():
             # t = np.arange(Tstart,Tstop+2*Ts,Ts)
             k = int(t / Ts)
+            #print("t: " + str(t))
+            print("time: " + str(k))
             for i in range(6):  
                 r = math.sqrt(cpg_x[i][k]**2+cpg_y[i][k]**2)
                 ksum0[i] = 0
@@ -84,11 +88,14 @@ class EigenbotJointPub():
                             ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i][k]
                             #print(ksum)
                 
-                B = np.array([(alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]])
-                cpg_x[i] = np.concatenate((cpg_x[i], B), axis=1)
-                cpg_y[i] = np.concatenate((cpg_y[i], np.array([(beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k]])), axis=1) 
-        
-                
+                B = (alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]
+                # print("B: " + str(B))
+                cpg_x[i].append(B)
+                #print("cpg_x")
+                #print(cpg_x[i])
+                cpg_y[i].append((beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k]) 
+                #print("cpg_y")
+                #print(cpg_y[i])    
             if not self.initialized:
                 self.rate.sleep()
                 continue
@@ -102,8 +109,8 @@ class EigenbotJointPub():
             joint_state.name = self.joint_names
 
             # Assume we are using positional control
-            joint_state.velocity = [float(3)]*self.num_joints
-            joint_state.effort = [float(3)]*self.num_joints
+            joint_state.velocity = [float(50)]*self.num_joints
+            joint_state.effort = [float(50)]*self.num_joints
             joint_state.position  = np.copy(self.initial_joint_positions)
 
             # Set joint positions
@@ -115,6 +122,7 @@ class EigenbotJointPub():
                         joint_state.position[i] = cpg_x[leg_i][-1] + self.initial_joint_positions[i]
                     if joint_i == 1:
                         joint_state.position[i] = cpg_y[leg_i][-1] + self.initial_joint_positions[i]
+                    print("Joint " + str(i) + ": " + str(joint_state.position[i]))
                 #else:
                 #    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
                 #    if joint_i >= 1:
