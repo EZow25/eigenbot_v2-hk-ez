@@ -57,11 +57,11 @@ class EigenbotJointPub():
         lambda_cs = 1
         # N = int((Tstop-Tstart)/Ts)
         cpg_s = 6
-        cpg_x = np.zeros(cpg_s)
-        cpg_y = np.zeros(cpg_s)
+        cpg_x = np.array([[0.01],[0.01],[0.01],[0.01],[0.01],[0.01]])
+        cpg_y = np.array([[0.01],[0.01],[0.01],[0.01],[0.01],[0.01]])
         for row in range(np.shape(cpg_x)[0]):
-            cpg_x[row][0]= .01
-            cpg_y[row][0]= .01
+            cpg_x[row][0]= float(.01)
+            cpg_y[row][0]= float(.01)
         ksum0 = np.zeros(6)
         K_array =   np.array(
                     [[0, -1, -1, 1, 1, -1],
@@ -73,7 +73,7 @@ class EigenbotJointPub():
         
         while not rospy.is_shutdown():
             # t = np.arange(Tstart,Tstop+2*Ts,Ts)
-            k = t / Ts
+            k = int(t / Ts)
             for i in range(6):  
                 r = math.sqrt(cpg_x[i][k]**2+cpg_y[i][k]**2)
                 ksum0[i] = 0
@@ -85,8 +85,8 @@ class EigenbotJointPub():
                             #print(ksum)
                 
                 B = np.array([(alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]])
-                cpg_x[i] = np.concatenate(cpg_x[i], B, axis=1)
-                cpg_y[i] = np.concatenate(cpg_y[i], np.array([(beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k]]), axis=1) 
+                cpg_x[i] = np.concatenate((cpg_x[i], B), axis=1)
+                cpg_y[i] = np.concatenate((cpg_y[i], np.array([(beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k]])), axis=1) 
         
                 
             if not self.initialized:
