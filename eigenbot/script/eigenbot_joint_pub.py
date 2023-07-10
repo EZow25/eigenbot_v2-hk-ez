@@ -128,7 +128,7 @@ class EigenbotJointPub():
                 #    if joint_i >= 1:
                 #        joint_state.position[i] = max(0, joint_state.position[i])
                 #    joint_state.position[i] += self.initial_joint_positions[i]
-                    self.joint_cmd_pub.publish(joint_state)
+                self.joint_cmd_pub.publish(joint_state)
 
             t += dt
             self.rate.sleep()
