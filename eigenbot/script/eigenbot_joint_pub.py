@@ -52,8 +52,8 @@ class EigenbotJointPub():
 							#print(K_array[r][c])
 							ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i]
 							#print(ksum)
-				cpg_x[i] = (alpha*(mew - r)*cpg_x[i] - omega*(cpg_y[i]))*Ts + cpg_x[i]
-				cpg_y[i] = (beta*(mew - r)*cpg_y[i] + omega*(cpg_x[i])+ lambda_cs*ksum0[i])*Ts + cpg_y[i] 
+				cpg_x[i] = (alpha*(mew - r)*cpg_x[i] - omega*(cpg_y[i]))*dt + cpg_x[i]
+				cpg_y[i] = (beta*(mew - r)*cpg_y[i] + omega*(cpg_x[i])+ lambda_cs*ksum0[i])*dt + cpg_y[i] 
 			
 			if not self.initialized:
 				self.rate.sleep()
