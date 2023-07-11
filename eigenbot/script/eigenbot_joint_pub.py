@@ -29,6 +29,7 @@ class EigenbotJointPub():
 		omega = 300/(np.pi*2) #oscillation frequency in rad/s
 		alpha = 1
 		beta = 1
+		lambda_cs = 1
 		gait_a = np.pi/18 #from paper
 		gait_b = np.pi/6 #from paper
 		gait_n = 4 #from paper
@@ -42,7 +43,6 @@ class EigenbotJointPub():
 		cpg_y = [0.01] * 6
 		while not rospy.is_shutdown():    
 			#CPG
-			lambda_cs = 1
 			for i in range(6):  
 				r = math.sqrt(cpg_x[i]**2+cpg_y[i]**2)
 				ksum0[i] = 0
