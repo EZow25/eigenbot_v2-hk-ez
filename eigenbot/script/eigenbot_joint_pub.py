@@ -5,6 +5,7 @@ import rospy
 import rosnode
 from sensor_msgs.msg import JointState
 import matplotlib as plt
+import math
 
 
 def wrap_to_pi(angle):
@@ -31,23 +32,26 @@ class EigenbotJointPub():
 		gait_b = np.pi/6 #from paper
 		gait_n = 4 #from paper
 		mew = 1 #from paper
-		Ts = .001
-		Tstart = 0
-		Tstop = .5
 		lambda_cs = 1
 		N = int((Tstop-Tstart)/Ts)
-		cpg_s = (6,N+2)
-		cpg_x = np.zeros(cpg_s)
-		cpg_y = np.zeros(cpg_s)
-		for row in range(np.shape(cpg_x)[0]):
-			cpg_x[row][0]= .01
-			cpg_y[row][0]= .01
 		ksum0 = np.zeros(6)
 		K_array = np.array([[0, -1, -1, 1, 1, -1], [-1, 0, 1, -1, -1, 1], [-1, 1, 0, -1, -1, 1], [1, -1, -1, 0, 1, -1], [1, -1, -1, 1, 0, -1], [-1, 1, 1, -1, -1, 0]])
-        
+		t = 0
+		dt = 0.001
         
 		while not rospy.is_shutdown():    
 			#CPG
+			Ts = 0.001
+			Tstart = 0
+			Tstop = t
+			lambda_cs = 1
+			N = int((Tstop - Tstart) / Ts)
+			cpg_s = (6, N + 2)
+			cpg_x = np.zeroes(cpg_s)
+			cpg_y = np.zeroes(cpg_s)
+			for row in range(np.shape(cpg_x)[0]):
+				cpg_x[row][0] = 0.01
+				cpg_y[row][0] = 0.01
 			for k in range(N+1):
 				for i in range(6):  
 					r = math.sqrt(cpg_x[i][k]**2+cpg_y[i][k]**2)
@@ -82,17 +86,18 @@ class EigenbotJointPub():
 			for i in range(self.num_joints):
 				joint_i = i//6
 				leg_i = i%6
-            	if leg_i == 2:
-            		if joint_i == 0:
-            			joint_state.position[i] = cpg_x[leg_i][-1] + self.initial_joint_positions[i]
-            		if joint_i == 1:
+				if leg_i == 2:
+					if joint_i == 0:
+						joint_state.position[i] = cpg_x[leg_i][-1] + self.initial_joint_positions[i]
+					if joint_i == 1:
 						joint_state.position[i] = cpg_y[leg_i][-1] + self.initial_joint_positions[i]
+				self.joint_cmd_pub.publish(joint_state)
                 #else:
                 #    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
                 #    if joint_i >= 1:
                 #        joint_state.position[i] = max(0, joint_state.position[i])
                 #    joint_state.position[i] += self.initial_joint_positions[i]
-                self.joint_cmd_pub.publish(joint_state)
+                # self.joint_cmd_pub.publish(joint_state)
 			t += dt
 			self.rate.sleep()
 
