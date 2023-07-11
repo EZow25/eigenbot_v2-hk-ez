@@ -69,17 +69,17 @@ class EigenbotJointPub():
 				self.rate.sleep()
 				continue
 
-            # Create Joint State
+                        # Create Joint State
 			joint_state = JointState()
 			joint_state.header.stamp = rospy.Time.now()
             
 			# for i in range(self.num_joints):
-            #     joint_state.name.append('bendy_input_M{}_S{}'.format(i+1,i+1))
+                        #     joint_state.name.append('bendy_input_M{}_S{}'.format(i+1,i+1))
 			joint_state.name = self.joint_names
 
             # Assume we are using positional control
-			joint_state.velocity = [float(10)]*self.num_joints
-			joint_state.effort = [float(10)]*self.num_joints
+			joint_state.velocity = [float(30)]*self.num_joints
+			joint_state.effort = [float(30)]*self.num_joints
 			joint_state.position  = np.copy(self.initial_joint_positions)
 
 			# Set joint positions
@@ -88,9 +88,12 @@ class EigenbotJointPub():
 				leg_i = i%6
 				if leg_i == 2:
 					if joint_i == 0:
-						joint_state.position[i] = cpg_x[leg_i][-1] + self.initial_joint_positions[i]
+						joint_state.position[i] = (10 * cpg_x[leg_i][-1]) + self.initial_joint_positions[i]
 					if joint_i == 1:
-						joint_state.position[i] = cpg_y[leg_i][-1] + self.initial_joint_positions[i]
+						joint_state.position[i] = (30 * cpg_y[leg_i][-1]) + self.initial_joint_positions[i]
+					print("CPG_X: " + str(cpg_x[leg_i][-1]))
+					print("CPG_Y: " + str(cpg_y[leg_i][-1]))
+					print("Joint " + str(joint_i) + ": " + str(joint_state.position[i]))
 				self.joint_cmd_pub.publish(joint_state)
                 #else:
                 #    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
