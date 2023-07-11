@@ -38,32 +38,22 @@ class EigenbotJointPub():
 		K_array = np.array([[0, -1, -1, 1, 1, -1], [-1, 0, 1, -1, -1, 1], [-1, 1, 0, -1, -1, 1], [1, -1, -1, 0, 1, -1], [1, -1, -1, 1, 0, -1], [-1, 1, 1, -1, -1, 0]])
 		t = 0
 		dt = 0.001
-        
+		cpg_x = [0.01] * 6
+		cpg_y = [0.01] * 6
 		while not rospy.is_shutdown():    
 			#CPG
-			Ts = 0.001
-			Tstart = 0
-			Tstop = t
 			lambda_cs = 1
-			N = int((Tstop - Tstart) / Ts)
-			cpg_s = (6, N + 2)
-			cpg_x = np.zeros(cpg_s)
-			cpg_y = np.zeros(cpg_s)
-			for row in range(np.shape(cpg_x)[0]):
-				cpg_x[row][0] = 0.01
-				cpg_y[row][0] = 0.01
-			for k in range(N+1):
-				for i in range(6):  
-					r = math.sqrt(cpg_x[i][k]**2+cpg_y[i][k]**2)
-					ksum0[i] = 0
-					for row in range(np.shape(K_array)[0]):
-						for col in range(np.shape(K_array)[1]):
-							if row == i:
-								#print(K_array[r][c])
-								ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i][k]
-								#print(ksum)
-					cpg_x[i][k+1] = (alpha*(mew - r)*cpg_x[i][k] - omega*(cpg_y[i][k]))*Ts + cpg_x[i][k]
-					cpg_y[i][k+1] = (beta*(mew - r)*cpg_y[i][k] + omega*(cpg_x[i][k])+ lambda_cs*ksum0[i])*Ts + cpg_y[i][k] 
+			for i in range(6):  
+				r = math.sqrt(cpg_x[i]**2+cpg_y[i]**2)
+				ksum0[i] = 0
+				for row in range(np.shape(K_array)[0]):
+					for col in range(np.shape(K_array)[1]):
+						if row == i:
+							#print(K_array[r][c])
+							ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i]
+							#print(ksum)
+				cpg_x[i] = (alpha*(mew - r)*cpg_x[i] - omega*(cpg_y[i]))*Ts + cpg_x[i]
+				cpg_y[i] = (beta*(mew - r)*cpg_y[i] + omega*(cpg_x[i])+ lambda_cs*ksum0[i])*Ts + cpg_y[i] 
 			
 			if not self.initialized:
 				self.rate.sleep()
@@ -88,11 +78,11 @@ class EigenbotJointPub():
 				leg_i = i%6
 				if leg_i == 2:
 					if joint_i == 0:
-						joint_state.position[i] = (10 * cpg_x[leg_i][-1]) + self.initial_joint_positions[i]
+						joint_state.position[i] = (10 * cpg_x[leg_i]) + self.initial_joint_positions[i]
 					if joint_i == 1:
-						joint_state.position[i] = (30 * cpg_y[leg_i][-1]) + self.initial_joint_positions[i]
-					print("CPG_X: " + str(cpg_x[leg_i][-1]))
-					print("CPG_Y: " + str(cpg_y[leg_i][-1]))
+						joint_state.position[i] = (30 * cpg_y[leg_i]) + self.initial_joint_positions[i]
+					print("CPG_X: " + str(cpg_x[leg_i]))
+					print("CPG_Y: " + str(cpg_y[leg_i]))
 					print("Joint " + str(joint_i) + ": " + str(joint_state.position[i]))
 				self.joint_cmd_pub.publish(joint_state)
                 #else:
