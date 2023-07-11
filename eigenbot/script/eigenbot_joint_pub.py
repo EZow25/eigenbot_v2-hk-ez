@@ -25,6 +25,7 @@ class EigenbotJointPub():
     
 
 	def main_loop(self):
+		# initialize constants
 		omega = 300/(np.pi*2) #oscillation frequency in rad/s
 		alpha = 1
 		beta = 1
@@ -33,7 +34,6 @@ class EigenbotJointPub():
 		gait_n = 4 #from paper
 		mew = 1 #from paper
 		lambda_cs = 1
-		N = int((Tstop-Tstart)/Ts)
 		ksum0 = np.zeros(6)
 		K_array = np.array([[0, -1, -1, 1, 1, -1], [-1, 0, 1, -1, -1, 1], [-1, 1, 0, -1, -1, 1], [1, -1, -1, 0, 1, -1], [1, -1, -1, 1, 0, -1], [-1, 1, 1, -1, -1, 0]])
 		t = 0
