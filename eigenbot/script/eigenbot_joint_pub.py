@@ -47,8 +47,8 @@ class EigenbotJointPub():
 			lambda_cs = 1
 			N = int((Tstop - Tstart) / Ts)
 			cpg_s = (6, N + 2)
-			cpg_x = np.zeroes(cpg_s)
-			cpg_y = np.zeroes(cpg_s)
+			cpg_x = np.zeros(cpg_s)
+			cpg_y = np.zeros(cpg_s)
 			for row in range(np.shape(cpg_x)[0]):
 				cpg_x[row][0] = 0.01
 				cpg_y[row][0] = 0.01
