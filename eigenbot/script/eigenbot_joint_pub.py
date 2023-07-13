@@ -7,7 +7,7 @@ from sensor_msgs.msg import JointState
 import matplotlib as plt
 import math
 
-simplified_mode = 0
+simplified_mode = 1
 
 def wrap_to_pi(angle):
     return np.remainder(angle + np.pi,  np.pi*2) - np.pi
@@ -27,6 +27,7 @@ class EigenbotJointPub():
 
 	def main_loop(self):
 		if simplified_mode == 1:
+			print("Simple Model")
 			# initialize constants
 			omega = 300/(np.pi*2) #oscillation frequency in rad/s
 			alpha = 1
@@ -86,7 +87,7 @@ class EigenbotJointPub():
 						print("CPG_X: " + str(cpg_x[leg_i]))
 						print("CPG_Y: " + str(cpg_y[leg_i]))
 						print("Joint " + str(joint_i) + ": " + str(joint_state.position[i]))
-					self.joint_cmd_pub.publish(joint_state)
+				self.joint_cmd_pub.publish(joint_state)
 					#else:
 					#    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
 					#    if joint_i >= 1:
@@ -96,6 +97,7 @@ class EigenbotJointPub():
 				t += dt
 				self.rate.sleep()
 		else:
+			print("Complex Model")
 			omega = 40/(np.pi*2) #oscillation frequency in rad/s
 			gamma = 40 #from paper
 			gait_a = np.pi/18 #from paper
@@ -151,8 +153,8 @@ class EigenbotJointPub():
 				joint_state.name = self.joint_names
 
 				# Assume we are using positional control
-				joint_state.velocity = [float(30)]*self.num_joints
-				joint_state.effort = [float(30)]*self.num_joints
+				joint_state.velocity = [float(5)]*self.num_joints
+				joint_state.effort = [float(5)]*self.num_joints
 				joint_state.position  = np.copy(self.initial_joint_positions)
 
 				# Set joint positions
@@ -161,13 +163,13 @@ class EigenbotJointPub():
 					leg_i = i%6
 					if leg_i == 2:
 						if joint_i == 0:
-							joint_state.position[i] = (10 * cpg_x[leg_i]) + self.initial_joint_positions[i]
+							joint_state.position[i] = cpg_x[leg_i] + self.initial_joint_positions[i]
 						if joint_i == 1:
-							joint_state.position[i] = (30 * cpg_y[leg_i]) + self.initial_joint_positions[i]
+							joint_state.position[i] = cpg_y[leg_i] + self.initial_joint_positions[i]
 						print("CPG_X: " + str(cpg_x[leg_i]))
 						print("CPG_Y: " + str(cpg_y[leg_i]))
 						print("Joint " + str(joint_i) + ": " + str(joint_state.position[i]))
-					self.joint_cmd_pub.publish(joint_state)
+				self.joint_cmd_pub.publish(joint_state)
 					#else:
 					#    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
 					#    if joint_i >= 1:
