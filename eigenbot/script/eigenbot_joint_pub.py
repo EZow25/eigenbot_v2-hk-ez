@@ -292,7 +292,7 @@ class EigenbotJointPub():
 		
   		# update imu dictionary
 		for i in range in self.num_joints:
-			self.imu[i] = dict()
+			self.imu[i + 1] = dict()
 			self.imu[i]['position'] = msg.position[i]
 			self.imu[i]['velocity'] = 0
 			self.imu[i]['effort'] = 0
