@@ -290,12 +290,14 @@ class EigenbotJointPub():
 		self.joint_names = msg.name
 		self.num_joints = len(msg.name)
 		# update imu dictionary
-		print(self.joint_names)
+		print(msg)
+		print(msg.type())
+		for i in range in self.num_joints:
+			self.imu[i] = [self.joint_positions[i]]
   
 
 
 if __name__ == '__main__':
 	rospy.init_node('eigenbot_joint_pub')
-	rospy.init_node('eigenbot_joint_sub', anonymous=True)
 	eigenbot_joint_pub = EigenbotJointPub()
 	eigenbot_joint_pub.main_loop() 
