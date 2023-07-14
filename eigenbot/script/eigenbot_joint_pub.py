@@ -23,6 +23,7 @@ class EigenbotJointPub():
 		self.rate = rospy.Rate(10)
 		self.joint_cmd_pub = rospy.Publisher('/eigenbot/joint_cmd', JointState, queue_size=1)
 		self.joint_fb_sub = rospy.Subscriber('/eigenbot/joint_fb', JointState, self.joint_fb_callback)
+		self.imu = {}
     
 
 	def main_loop(self):
@@ -178,6 +179,7 @@ class EigenbotJointPub():
 					# self.joint_cmd_pub.publish(joint_state)
 				t += dt
 				self.rate.sleep()
+		rospy.spin()
        
 
 
@@ -188,9 +190,13 @@ class EigenbotJointPub():
 			self.initialized = True
 		self.joint_names = msg.name
 		self.num_joints = len(msg.name)
+		# update imu dictionary
+		print(self.joint_names)
+  
 
 
 if __name__ == '__main__':
 	rospy.init_node('eigenbot_joint_pub')
+	rospy.init_node('eigenbot_joint_sub', anonymous=True)
 	eigenbot_joint_pub = EigenbotJointPub()
 	eigenbot_joint_pub.main_loop() 
