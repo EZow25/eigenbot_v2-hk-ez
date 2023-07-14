@@ -291,7 +291,7 @@ class EigenbotJointPub():
 		self.num_joints = len(msg.name)
 		
   		# update imu dictionary
-		for i in range in self.num_joints:
+		for i in range(self.num_joints):
 			self.imu[i + 1] = dict()
 			self.imu[i]['position'] = msg.position[i]
 			self.imu[i]['velocity'] = 0
