@@ -116,39 +116,39 @@ class EigenbotJointPub():
 					if simleg_i == 0:
 						CPG_index = 1
 						if joint_i == 0: #proximal joint
-							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
 						if joint_i == 1: #intermediate joint
-							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
 					if simleg_i == 1:
 						CPG_index = 3
 						if joint_i == 0: #proximal joint
-							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
 						if joint_i == 1: #intermediate joint
-							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
 					if simleg_i == 2:
 						CPG_index = 5
 						if joint_i == 0: #proximal joint
-							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
 						if joint_i == 1: #intermediate joint
-							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
 					if simleg_i == 3:
 						CPG_index = 0
 						if joint_i == 0: #proximal joint
-							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
 						if joint_i == 1: #intermediate joint
-							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
 					if simleg_i == 4:
 						CPG_index = 2
 						if joint_i == 0: #proximal joint
-							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
 						if joint_i == 1: #intermediate joint
-							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
 					if simleg_i == 5:
 						CPG_index = 4
 						if joint_i == 0: #proximal joint
-							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
 						if joint_i == 1: #intermediate joint
-							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
 					
 						# print("CPG_X: " + str(cpg_x_next[leg_i]))
 						# print("CPG_Y: " + str(cpg_y_next[leg_i]))
