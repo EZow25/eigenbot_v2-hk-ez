@@ -42,13 +42,32 @@ class EigenbotJointPub():
 			ksum0 = np.zeros(6)
 			K_array = np.array([[0, -1, -1, 1, 1, -1], [-1, 0, 1, -1, -1, 1], [-1, 1, 0, -1, -1, 1], [1, -1, -1, 0, 1, -1], [1, -1, -1, 1, 0, -1], [-1, 1, 1, -1, -1, 0]])
 			t = 0
-			dt = 0.001
-			cpg_x = [0.01] * 6
-			cpg_y = [0.01] * 6
+			dt = .001
+			numlegs = 6
+			cpg_x = [0.01] * numlegs #array sized 6 init to 0.01
+			cpg_y = [0.01] * numlegs
+			cpg_x[0]= -0.01
+			cpg_y[0]= -0.01
+			cpg_x[1]= 0.01
+			cpg_y[1]= 0.01
+			cpg_x[2]= 0.01
+			cpg_y[2]= 0.01
+			cpg_x[3]= -0.01
+			cpg_y[3]= -0.01
+			cpg_x[4]= -0.01
+			cpg_y[4]= -0.01
+			cpg_x[5]= 0.01
+			cpg_y[5]= 0.01
+			cpg_x_next = cpg_x
+			cpg_y_next = cpg_y
+			cx0_offset = np.array([np.pi/4, np.pi/4, 0, 0, -np.pi/4, -np.pi/4])
+			#cx0_offset = np.zeros(6)
+			cy0_offset = np.array([np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16])
+			#cy0_offset = np.zeros(6)
 			while not rospy.is_shutdown():    
 				#CPG
-				for i in range(6):  
-					r = math.sqrt(cpg_x[i]**2+cpg_y[i]**2)
+				for i in range(6):  #for each leg
+					r = math.sqrt((cpg_x[i]-cx0_offset[i])**2+(cpg_y[i]-cy0_offset[i])**2)
 					ksum0[i] = 0
 					for row in range(np.shape(K_array)[0]):
 						for col in range(np.shape(K_array)[1]):
@@ -56,8 +75,8 @@ class EigenbotJointPub():
 								#print(K_array[r][c])
 								ksum0[i] = (ksum0[i] + K_array[row][col])*cpg_y[i]
 								#print(ksum)
-					cpg_x[i] = (alpha*(mew - r)*cpg_x[i] - omega*(cpg_y[i]))*dt + cpg_x[i]
-					cpg_y[i] = (beta*(mew - r)*cpg_y[i] + omega*(cpg_x[i])+ lambda_cs*ksum0[i])*dt + cpg_y[i] 
+					cpg_x_next[i] = (alpha*(mew - (r*r))*cpg_x[i] - omega*(cpg_y[i]))*dt + cpg_x[i]
+					cpg_y_next[i] = (beta*(mew - (r*r))*cpg_y[i] + omega*(cpg_x[i])+ lambda_cs*ksum0[i])*dt + cpg_y[i] 
 				
 				if not self.initialized:
 					self.rate.sleep()
@@ -77,17 +96,63 @@ class EigenbotJointPub():
 				joint_state.position  = np.copy(self.initial_joint_positions)
 
 				# Set joint positions
+
+				#0123456789 10 11 12 13 14 15 16 17 index
+				#0000001111  1  1  2  2  2  2  2  2 joint number (joint_i var)
+				#proximal interm        distal      joint name
+				#1234561234  5  6  1  2  3  4  5  6 leg number   (leg_i var)
+
+				# Translation:  
+				# CPG 0 = leg 1 = sim leg 3 
+				# CPG 1 = leg 2 = sim leg 0 
+				# CPG 2 = leg 3 = sim leg 4 
+				# CPG 3 = leg 4 = sim leg 1 
+				# CPG 4 = leg 5 = sim leg 5 
+				# CPG 5 = leg 6 = sim leg 2
+
 				for i in range(self.num_joints):
 					joint_i = i//6
-					leg_i = i%6
-					if leg_i == 2:
-						if joint_i == 0:
-							joint_state.position[i] = (10 * cpg_x[leg_i]) + self.initial_joint_positions[i]
-						if joint_i == 1:
-							joint_state.position[i] = (30 * cpg_y[leg_i]) + self.initial_joint_positions[i]
-						print("CPG_X: " + str(cpg_x[leg_i]))
-						print("CPG_Y: " + str(cpg_y[leg_i]))
-						print("Joint " + str(joint_i) + ": " + str(joint_state.position[i]))
+					simleg_i = i%6
+					if simleg_i == 0:
+						CPG_index = 1
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 1:
+						CPG_index = 3
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 2:
+						CPG_index = 5
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 3:
+						CPG_index = 0
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 4:
+						CPG_index = 2
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 5:
+						CPG_index = 4
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (8 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (20 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					
+						# print("CPG_X: " + str(cpg_x_next[leg_i]))
+						# print("CPG_Y: " + str(cpg_y_next[leg_i]))
+						# print("Joint " + str(joint_i) + ": " + str(joint_state.position[i]))
 				self.joint_cmd_pub.publish(joint_state)
 					#else:
 					#    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
@@ -96,6 +161,8 @@ class EigenbotJointPub():
 					#    joint_state.position[i] += self.initial_joint_positions[i]
 					# self.joint_cmd_pub.publish(joint_state)
 				t += dt
+				cpg_x = cpg_x_next
+				cpg_y = cpg_y_next
 				self.rate.sleep()
 		else:
 			print("Complex Model")
@@ -107,13 +174,15 @@ class EigenbotJointPub():
 			mew = 1 #from paper
 			#cx0_offset = np.zeros(6)
 			#cy0_offset = np.zeros(6)
-			#cx0_offset = np.array([np.pi/4, np.pi/4, 0, 0, -np.pi/4, -np.pi/4]) 
-			cx0_offset = np.array([np.pi/16, np.pi/16, 0, 0, -np.pi/16, -np.pi/16]) 
+			cx0_offset = np.array([np.pi/4, np.pi/4, 0, 0, -np.pi/4, -np.pi/4]) 
+			#cx0_offset = np.array([np.pi/16, np.pi/16, 0, 0, -np.pi/16, -np.pi/16]) 
 			cy0_offset = np.array([np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16, np.pi/16]) #from paper
 			t = 0
 			dt = 0.0001
 			cpg_x = np.zeros(6)
 			cpg_y = np.zeros(6)
+			cpg_x_next = np.zeros(6)
+			cpg_y_next = np.zeros(6)
 			ksum0 = np.zeros(6)
 			lambda_cs = 0.25 #K array coupling strength
 			#coupling matrix K for tripod gait on hexapod
@@ -139,8 +208,8 @@ class EigenbotJointPub():
 								#print(K_array[r][c])
 								ksum0[i] = ksum0[i] + (K_array[r][c]*(cpg_y[i]-cy0_offset[i]))
 								#print(ksum)
-					cpg_x[i] = (gamma*(mew - H)*dHdx - omega*(dHdy))*dt + cpg_x[i]
-					cpg_y[i] = (gamma*(mew - H)*dHdy + omega*(dHdx) + lambda_cs*ksum0[i])*dt + cpg_y[i]
+					cpg_x_next[i] = (gamma*(mew - H)*dHdx - omega*(dHdy))*dt + cpg_x[i]
+					cpg_y_next[i] = (gamma*(mew - H)*dHdy + omega*(dHdx) + lambda_cs*ksum0[i])*dt + cpg_y[i]
 				if not self.initialized:
 					self.rate.sleep()
 					continue
@@ -161,15 +230,43 @@ class EigenbotJointPub():
 				# Set joint positions
 				for i in range(self.num_joints):
 					joint_i = i//6
-					leg_i = i%6
-					if leg_i == 2:
-						if joint_i == 0:
-							joint_state.position[i] = cpg_x[leg_i] + self.initial_joint_positions[i]
-						if joint_i == 1:
-							joint_state.position[i] = cpg_y[leg_i] + self.initial_joint_positions[i]
-						print("CPG_X: " + str(cpg_x[leg_i]))
-						print("CPG_Y: " + str(cpg_y[leg_i]))
-						print("Joint " + str(joint_i) + ": " + str(joint_state.position[i]))
+					simleg_i = i%6
+					if simleg_i == 0:
+						CPG_index = 1
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 1:
+						CPG_index = 3
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 2:
+						CPG_index = 5
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 3:
+						CPG_index = 0
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 4:
+						CPG_index = 2
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
+					if simleg_i == 5:
+						CPG_index = 4
+						if joint_i == 0: #proximal joint
+							joint_state.position[i] = (10 * cpg_x_next[CPG_index]) + self.initial_joint_positions[i]
+						if joint_i == 1: #intermediate joint
+							joint_state.position[i] = (30 * cpg_y_next[CPG_index]) + self.initial_joint_positions[i]
 				self.joint_cmd_pub.publish(joint_state)
 					#else:
 					#    joint_state.position[i] = amplitudes[joint_i,leg_i]*np.sin(t + phase_offsets[joint_i,leg_i]) # + const_offsets[joint_i, leg_i]
@@ -178,6 +275,8 @@ class EigenbotJointPub():
 					#    joint_state.position[i] += self.initial_joint_positions[i]
 					# self.joint_cmd_pub.publish(joint_state)
 				t += dt
+				cpg_x = cpg_x_next
+				cpg_y = cpg_y_next
 				self.rate.sleep()
 		rospy.spin()
        
