@@ -23,6 +23,7 @@ class EigenbotJointPub():
 		self.rate = rospy.Rate(10)
 		self.joint_cmd_pub = rospy.Publisher('/eigenbot/joint_cmd', JointState, queue_size=1)
 		self.joint_fb_sub = rospy.Subscriber('/eigenbot/joint_fb', JointState, self.joint_fb_callback)
+		self.imu = {}
     
 
 	def main_loop(self):
@@ -210,10 +211,8 @@ class EigenbotJointPub():
 				#CPG
 				for i in range(6):
 					H = np.absolute(((cpg_x[i]-cx0_offset[i])/gait_a)**gait_n) + np.absolute(((cpg_y[i]-cy0_offset[i])/gait_b)**gait_n)
-					# dHdx = (gait_n/gait_a)*((cpg_x[i]-cx0_offset[i])/gait_a)**(gait_n-1)
-					dHdx = (gait_n * (np.absolute(cpg_x[i] - cx0_offset[i])**(gait_n - 2)) * (cpg_x[i] - cx0_offset[i])) / (np.absolute(gait_a)**gait_n)
-					# dHdy = (gait_n/gait_b)*((cpg_y[i]-cy0_offset[i])/gait_b)**(gait_n-1)
-					dHdy = (gait_n * (np.absolute(cpg_y[i] - cy0_offset[i])**(gait_n - 2)) * (cpg_y[i] - cy0_offset[i])) / (np.absolute(gait_a)**gait_n)
+					dHdx = (gait_n/gait_a)*((cpg_x[i]-cx0_offset[i])/gait_a)**(gait_n-1)
+					dHdy = (gait_n/gait_b)*((cpg_y[i]-cy0_offset[i])/gait_b)**(gait_n-1)
 					
 					#reset ksum0
 					ksum0[i] = 0
@@ -303,6 +302,18 @@ class EigenbotJointPub():
 			self.initialized = True
 		self.joint_names = msg.name
 		self.num_joints = len(msg.name)
+		
+  		# update imu dictionary
+		for i in range(self.num_joints):
+			self.imu[i + 1] = dict()
+			self.imu[i + 1]['position'] = msg.position[i]
+			self.imu[i + 1]['velocity'] = 0
+			self.imu[i + 1]['effort'] = 0
+			if i < len(msg.velocity):
+				self.imu[i + 1]['velocity'] = msg.velocity[i]
+			if i < len(msg.effort):
+				self.imu[i + 1]['effort'] = msg.effort[i]
+		print(self.imu)
 
 
 if __name__ == '__main__':
