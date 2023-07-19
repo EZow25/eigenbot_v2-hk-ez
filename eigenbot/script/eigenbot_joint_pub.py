@@ -197,9 +197,11 @@ class EigenbotJointPub():
 				#CPG
 				for i in range(6):
 					H = np.absolute(((cpg_x[i]-cx0_offset[i])/gait_a)**gait_n) + np.absolute(((cpg_y[i]-cy0_offset[i])/gait_b)**gait_n)
-					dHdx = (gait_n/gait_a)*((cpg_x[i]-cx0_offset[i])/gait_a)**(gait_n-1)
-					dHdy = (gait_n/gait_b)*((cpg_y[i]-cy0_offset[i])/gait_b)**(gait_n-1)
-					
+					# dHdx = (gait_n/gait_a)*((cpg_x[i]-cx0_offset[i])/gait_a)**(gait_n-1)
+					dHdx = (gait_n * (np.absolute(cpg_x[i] - cx0_offset[i])**(gait_n - 2)) * (cpg_x[i] - cx0_offset[i])) / (np.absolute(gait_a)**gait_n)
+					# dHdy = (gait_n/gait_b)*((cpg_y[i]-cy0_offset[i])/gait_b)**(gait_n-1)
+					dHdy = (gait_n * (np.absolute(cpg_y[i] - cy0_offset[i])**(gait_n - 2)) * (cpg_y[i] - cy0_offset[i])) / (np.absolute(gait_a)**gait_n)
+
 					#reset ksum0
 					ksum0[i] = 0
 					for r in range(np.shape(K_array)[0]):
